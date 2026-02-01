@@ -1,0 +1,31 @@
+{
+  "name": "perplexo-bot",
+  "version": "1.0.0",
+  "description": "Bot multi-plataforma (Telegram + WhatsApp) integrado com Perplexity AI",
+  "main": "src/whatsapp_bot.js",
+  "scripts": {
+    "start": "node src/whatsapp_bot.js",
+    "dev": "nodemon src/whatsapp_bot.js",
+    "pm2:start": "pm2 start ecosystem.config.js",
+    "pm2:stop": "pm2 stop ecosystem.config.js",
+    "pm2:restart": "pm2 restart ecosystem.config.js"
+  },
+  "keywords": [
+    "whatsapp",
+    "bot",
+    "perplexity",
+    "ai",
+    "baileys"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@whiskeysockets/baileys": "^6.6.0",
+    "axios": "^1.6.7",
+    "pino": "^8.18.0",
+    "qrcode-terminal": "^0.12.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.3"
+  }
+}

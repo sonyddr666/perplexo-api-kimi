@@ -1,0 +1,90 @@
+# ============================================
+# Perplexo Bot - Docker Compose
+# ============================================
+
+version: '3.8'
+
+services:
+  # MCP Server - API wrapper for Perplexity
+  mcp-server:
+    build: .
+    container_name: perplexo-mcp
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./.env:/app/.env:ro
+    environment:
+      - MCP_PORT=5000
+      - MCP_HOST=0.0.0.0
+    networks:
+      - perplexo-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Telegram Bot
+  telegram-bot:
+    build: .
+    container_name: perplexo-telegram
+    restart: unless-stopped
+    command: python3 src/telegram_bot.py
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./.env:/app/.env:ro
+    environment:
+      - TELEGRAM_PORT=8000
+      - MCP_API_URL=http://mcp-server:5000
+    depends_on:
+      mcp-server:
+        condition: service_healthy
+    networks:
+      - perplexo-network
+
+  # WhatsApp Bot
+  whatsapp-bot:
+    build: .
+    container_name: perplexo-whatsapp
+    restart: unless-stopped
+    command: node src/whatsapp_bot.js
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./.env:/app/.env:ro
+    environment:
+      - MCP_API_URL=http://mcp-server:5000
+    depends_on:
+      mcp-server:
+        condition: service_healthy
+    networks:
+      - perplexo-network
+
+  # Nginx Reverse Proxy (optional)
+  nginx:
+    image: nginx:alpine
+    container_name: perplexo-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./config/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./data/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - telegram-bot
+    networks:
+      - perplexo-network
+    profiles:
+      - production
+
+networks:
+  perplexo-network:
+    driver: bridge
